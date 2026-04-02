@@ -493,7 +493,6 @@
 </div>
 
 <script>
-    // ============ ОСНОВНАЯ ЛОГИКА (без донатов и премиума) ============
     let currentPrices = {};
     let portfolio = [];
     
@@ -528,7 +527,6 @@
             renderPortfolio();
             updateStrategy();
         } catch (error) {
-            console.error('Ошибка:', error);
             document.getElementById('lastUpdate').innerHTML = 'ошибка обновления';
         }
     }
