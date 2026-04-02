@@ -65,13 +65,14 @@
             margin-top: 4px;
         }
         
-        .premium-badge {
-            background: linear-gradient(135deg, #f59e0b, #ea580c);
-            padding: 6px 16px;
+        .last-update {
+            background: white;
+            padding: 6px 12px;
             border-radius: 40px;
             font-size: 11px;
-            font-weight: 600;
-            color: white;
+            color: #475569;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
         }
 
         .card {
@@ -280,33 +281,6 @@
             color: #334155;
         }
 
-        .premium-btn {
-            background: linear-gradient(135deg, #f59e0b, #ea580c);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 40px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.1s;
-            width: 100%;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .premium-btn:active { transform: scale(0.98); opacity: 0.9; }
-        
-        .premium-locked {
-            opacity: 0.6;
-            filter: blur(1px);
-            pointer-events: none;
-            position: relative;
-        }
-
         .ad-container {
             background: #f1f5f9;
             border-radius: 20px;
@@ -345,19 +319,6 @@
             padding: 20px;
             color: #94a3b8;
         }
-        
-        .email-input {
-            margin-top: 16px;
-            padding: 12px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 40px;
-            width: 100%;
-            font-size: 13px;
-            outline: none;
-        }
-        
-        .email-input:focus { border-color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -367,10 +328,10 @@
             <h1>CryptoVision</h1>
             <p>инвестиционный дашборд • реальные цены</p>
         </div>
-        <div id="premiumStatus" class="premium-badge" style="background: #64748b;">FREE</div>
+        <div class="last-update" id="lastUpdate">обновление...</div>
     </div>
 
-    <!-- A-Ads блок (НОВЫЙ КОД 2432728) -->
+    <!-- A-Ads блок верхний -->
     <div class="ad-container">
         <div id="frame" style="width: 320px;margin: auto;z-index: 99998;height: auto">
             <iframe data-aa='2432728' src='//ad.a-ads.com/2432728/?size=320x50'
@@ -394,13 +355,11 @@
                     <div class="total-change" id="totalChange">—</div>
                 </div>
                 
-                <div id="assetListWrapper">
-                    <div class="asset-list" id="assetList">
-                        <div class="loading">Загрузка...</div>
-                    </div>
+                <div class="asset-list" id="assetList">
+                    <div class="loading">Загрузка...</div>
                 </div>
                 
-                <div id="addAssetForm" class="add-asset-form">
+                <div class="add-asset-form">
                     <select id="assetSelect" class="add-input">
                         <option value="bitcoin">Bitcoin (BTC)</option>
                         <option value="ethereum">Ethereum (ETH)</option>
@@ -521,18 +480,10 @@
                     <div class="strategy-text">Добавьте активы в портфель для получения рекомендаций</div>
                 </div>
             </div>
-            
-            <input type="email" id="userEmail" class="email-input" placeholder="Введите email для активации премиума">
-            
-            <button class="premium-btn" onclick="buyPremium()">
-                ⭐ Купить Premium — 199 ₽
-            </button>
-            <p style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 8px;">
-                Неограниченный портфель • Уведомления • Экспорт
-            </p>
         </div>
     </div>
 
+    <!-- A-Ads блок нижний -->
     <div class="ad-container" style="margin-top: 20px;">
         <div id="frame2" style="width: 320px;margin: auto;z-index: 99998;height: auto">
             <iframe data-aa='2432728' src='//ad.a-ads.com/2432728/?size=320x50'
@@ -542,82 +493,7 @@
 </div>
 
 <script>
-    // ============ ПРЕМИУМ СИСТЕМА ============
-    // ЗАМЕНИ НА СВОЙ АЛИАС ИЗ DONATION ALERTS
-    const DONATION_ALERT_ALIAS = "iSYber";  // <- ЗАМЕНИТЬ!
-    
-    function checkPremium() {
-        const premium = localStorage.getItem('crypto_premium');
-        if (premium === 'true') {
-            document.getElementById('premiumStatus').innerHTML = '⭐ PREMIUM';
-            document.getElementById('premiumStatus').style.background = "linear-gradient(135deg, #f59e0b, #ea580c)";
-            return true;
-        }
-        return false;
-    }
-    
-    function buyPremium() {
-        const email = document.getElementById('userEmail').value;
-        
-        if (!email || !email.includes('@')) {
-            showToast('Введите корректный email для активации премиума');
-            return;
-        }
-        
-        // Сохраняем email
-        localStorage.setItem('crypto_premium_email', email);
-        
-        // Открываем донат-страницу Donation Alerts
-        window.open(`https://www.donationalerts.com/r/${DONATION_ALERT_ALIAS}`, '_blank');
-        
-        showToast('После оплаты (199 ₽) премиум активируется автоматически в течение 1 минуты');
-        
-        // Запускаем проверку статуса
-        setTimeout(checkPaymentStatus, 5000);
-    }
-    
-    function checkPaymentStatus() {
-        const email = localStorage.getItem('crypto_premium_email');
-        if (!email) return;
-        
-        // Проверяем локально (для демо)
-        // В реальности тут должен быть запрос к твоему серверу
-        showToast('Ожидание оплаты... Проверка через 15 секунд');
-        setTimeout(() => {
-            // ЭТО ЗАГЛУШКА. В РЕАЛЬНОЙ ВЕРСИИ НУЖЕН СЕРВЕР
-            const fakeCheck = confirm('Оплата прошла? Нажми ОК если да (для теста)');
-            if (fakeCheck) {
-                localStorage.setItem('crypto_premium', 'true');
-                showToast('⭐ Premium активирован! Обновляем...');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast('Если вы оплатили, напишите в Telegram @support');
-            }
-        }, 15000);
-    }
-    
-    // Ручная активация по коду (для тестов)
-    function manualActivate() {
-        localStorage.setItem('crypto_premium', 'true');
-        location.reload();
-    }
-    
-    function isPremium() {
-        return localStorage.getItem('crypto_premium') === 'true';
-    }
-    
-    function updateUIBasedOnPremium() {
-        const hasPremium = isPremium();
-        if (!hasPremium && portfolio.length >= 3) {
-            const addForm = document.getElementById('addAssetForm');
-            if (addForm) {
-                addForm.classList.add('premium-locked');
-                addForm.style.pointerEvents = 'none';
-            }
-        }
-    }
-    
-    // ============ ОСТАЛЬНАЯ ЛОГИКА ============
+    // ============ ОСНОВНАЯ ЛОГИКА (без донатов и премиума) ============
     let currentPrices = {};
     let portfolio = [];
     
@@ -633,7 +509,6 @@
             ];
         }
         renderPortfolio();
-        updateUIBasedOnPremium();
     }
     
     function savePortfolio() {
@@ -654,6 +529,7 @@
             updateStrategy();
         } catch (error) {
             console.error('Ошибка:', error);
+            document.getElementById('lastUpdate').innerHTML = 'ошибка обновления';
         }
     }
     
@@ -704,14 +580,9 @@
         portfolio.splice(index, 1);
         savePortfolio();
         fetchPrices();
-        updateUIBasedOnPremium();
     }
     
     function addAsset() {
-        if (!isPremium() && portfolio.length >= 3) {
-            showToast('🔒 Бесплатная версия — максимум 3 актива. Купите Premium');
-            return;
-        }
         const select = document.getElementById('assetSelect');
         const amount = parseFloat(document.getElementById('assetAmount').value);
         const coinId = select.value;
@@ -729,7 +600,6 @@
         fetchPrices();
         showToast(`Добавлено ${amount} ${symbol}`);
         document.getElementById('assetAmount').value = '';
-        updateUIBasedOnPremium();
     }
     
     function calculateInvestment() {
@@ -804,7 +674,6 @@
         setTimeout(() => toast.remove(), 2000);
     }
     
-    checkPremium();
     loadPortfolio();
     fetchPrices();
     setInterval(fetchPrices, 30000);
