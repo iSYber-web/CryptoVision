@@ -65,14 +65,13 @@
             margin-top: 4px;
         }
         
-        .last-update {
-            background: white;
-            padding: 6px 12px;
+        .premium-badge {
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            padding: 6px 16px;
             border-radius: 40px;
             font-size: 11px;
-            color: #475569;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            border: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: white;
         }
 
         .card {
@@ -281,29 +280,31 @@
             color: #334155;
         }
 
-        .premium-teaser {
-            background: linear-gradient(135deg, #fef9e6, #fff7ed);
-            border: 1px solid #fde68a;
-            border-radius: 24px;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .premium-title {
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
         .premium-btn {
-            background: #f59e0b;
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
             color: white;
             border: none;
-            padding: 10px 24px;
+            padding: 14px 24px;
             border-radius: 40px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
+            transition: 0.1s;
+            width: 100%;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .premium-btn:active { transform: scale(0.98); opacity: 0.9; }
+        
+        .premium-locked {
+            opacity: 0.6;
+            filter: blur(1px);
+            pointer-events: none;
+            position: relative;
         }
 
         .ad-container {
@@ -317,11 +318,6 @@
             padding: 14px;
             min-height: 70px;
             border: 1px solid #e2e8f0;
-        }
-        
-        .ad-placeholder-text {
-            font-size: 10px;
-            color: #94a3b8;
         }
         
         .toast {
@@ -349,6 +345,19 @@
             padding: 20px;
             color: #94a3b8;
         }
+        
+        .email-input {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            width: 100%;
+            font-size: 13px;
+            outline: none;
+        }
+        
+        .email-input:focus { border-color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -358,13 +367,13 @@
             <h1>CryptoVision</h1>
             <p>инвестиционный дашборд • реальные цены</p>
         </div>
-        <div class="last-update" id="lastUpdate">обновление...</div>
+        <div id="premiumStatus" class="premium-badge" style="background: #64748b;">FREE</div>
     </div>
 
-    <!-- A-Ads блок -->
+    <!-- A-Ads блок (НОВЫЙ КОД 2432728) -->
     <div class="ad-container">
         <div id="frame" style="width: 320px;margin: auto;z-index: 99998;height: auto">
-            <iframe data-aa='2432617' src='//ad.a-ads.com/2432617/?size=320x50'
+            <iframe data-aa='2432728' src='//ad.a-ads.com/2432728/?size=320x50'
                 style='border:0; padding:0; width:320px; height:50px; overflow:hidden;display: block;margin: auto'></iframe>
         </div>
     </div>
@@ -385,11 +394,13 @@
                     <div class="total-change" id="totalChange">—</div>
                 </div>
                 
-                <div class="asset-list" id="assetList">
-                    <div class="loading">Загрузка...</div>
+                <div id="assetListWrapper">
+                    <div class="asset-list" id="assetList">
+                        <div class="loading">Загрузка...</div>
+                    </div>
                 </div>
                 
-                <div class="add-asset-form">
+                <div id="addAssetForm" class="add-asset-form">
                     <select id="assetSelect" class="add-input">
                         <option value="bitcoin">Bitcoin (BTC)</option>
                         <option value="ethereum">Ethereum (ETH)</option>
@@ -511,23 +522,102 @@
                 </div>
             </div>
             
-            <div class="premium-teaser">
-                <div class="premium-title">Расширенная аналитика</div>
-                <div style="font-size:12px; color:#92400e;">Исторические данные • Экспорт отчетов • Уведомления</div>
-                <button class="premium-btn" onclick="showPremiumToast()">Premium — $9.99</button>
-            </div>
+            <input type="email" id="userEmail" class="email-input" placeholder="Введите email для активации премиума">
+            
+            <button class="premium-btn" onclick="buyPremium()">
+                ⭐ Купить Premium — 199 ₽
+            </button>
+            <p style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 8px;">
+                Неограниченный портфель • Уведомления • Экспорт
+            </p>
         </div>
     </div>
 
     <div class="ad-container" style="margin-top: 20px;">
         <div id="frame2" style="width: 320px;margin: auto;z-index: 99998;height: auto">
-            <iframe data-aa='2432617' src='//ad.a-ads.com/2432617/?size=320x50'
+            <iframe data-aa='2432728' src='//ad.a-ads.com/2432728/?size=320x50'
                 style='border:0; padding:0; width:320px; height:50px; overflow:hidden;display: block;margin: auto'></iframe>
         </div>
     </div>
 </div>
 
 <script>
+    // ============ ПРЕМИУМ СИСТЕМА ============
+    // ЗАМЕНИ НА СВОЙ АЛИАС ИЗ DONATION ALERTS
+    const DONATION_ALERT_ALIAS = "YOUR_ALIAS";  // <- ЗАМЕНИТЬ!
+    
+    function checkPremium() {
+        const premium = localStorage.getItem('crypto_premium');
+        if (premium === 'true') {
+            document.getElementById('premiumStatus').innerHTML = '⭐ PREMIUM';
+            document.getElementById('premiumStatus').style.background = "linear-gradient(135deg, #f59e0b, #ea580c)";
+            return true;
+        }
+        return false;
+    }
+    
+    function buyPremium() {
+        const email = document.getElementById('userEmail').value;
+        
+        if (!email || !email.includes('@')) {
+            showToast('Введите корректный email для активации премиума');
+            return;
+        }
+        
+        // Сохраняем email
+        localStorage.setItem('crypto_premium_email', email);
+        
+        // Открываем донат-страницу Donation Alerts
+        window.open(`https://www.donationalerts.com/r/${DONATION_ALERT_ALIAS}`, '_blank');
+        
+        showToast('После оплаты (199 ₽) премиум активируется автоматически в течение 1 минуты');
+        
+        // Запускаем проверку статуса
+        setTimeout(checkPaymentStatus, 5000);
+    }
+    
+    function checkPaymentStatus() {
+        const email = localStorage.getItem('crypto_premium_email');
+        if (!email) return;
+        
+        // Проверяем локально (для демо)
+        // В реальности тут должен быть запрос к твоему серверу
+        showToast('Ожидание оплаты... Проверка через 15 секунд');
+        setTimeout(() => {
+            // ЭТО ЗАГЛУШКА. В РЕАЛЬНОЙ ВЕРСИИ НУЖЕН СЕРВЕР
+            const fakeCheck = confirm('Оплата прошла? Нажми ОК если да (для теста)');
+            if (fakeCheck) {
+                localStorage.setItem('crypto_premium', 'true');
+                showToast('⭐ Premium активирован! Обновляем...');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast('Если вы оплатили, напишите в Telegram @support');
+            }
+        }, 15000);
+    }
+    
+    // Ручная активация по коду (для тестов)
+    function manualActivate() {
+        localStorage.setItem('crypto_premium', 'true');
+        location.reload();
+    }
+    
+    function isPremium() {
+        return localStorage.getItem('crypto_premium') === 'true';
+    }
+    
+    function updateUIBasedOnPremium() {
+        const hasPremium = isPremium();
+        if (!hasPremium && portfolio.length >= 3) {
+            const addForm = document.getElementById('addAssetForm');
+            if (addForm) {
+                addForm.classList.add('premium-locked');
+                addForm.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
+    // ============ ОСТАЛЬНАЯ ЛОГИКА ============
     let currentPrices = {};
     let portfolio = [];
     
@@ -543,6 +633,7 @@
             ];
         }
         renderPortfolio();
+        updateUIBasedOnPremium();
     }
     
     function savePortfolio() {
@@ -550,41 +641,31 @@
     }
     
     async function fetchPrices() {
-        const symbols = portfolio.map(a => a.id).join(',');
         const url = 'https://api.binance.com/api/v3/ticker/price';
-        
         try {
             const response = await fetch(url);
             const data = await response.json();
-            
             for (const asset of portfolio) {
                 const ticker = data.find(t => t.symbol === asset.symbol.toUpperCase() + 'USDT');
-                if (ticker) {
-                    currentPrices[asset.id] = parseFloat(ticker.price);
-                }
+                if (ticker) currentPrices[asset.id] = parseFloat(ticker.price);
             }
-            
             document.getElementById('lastUpdate').innerHTML = `обновлено ${new Date().toLocaleTimeString()}`;
             renderPortfolio();
             updateStrategy();
         } catch (error) {
-            console.error('Ошибка загрузки цен:', error);
-            document.getElementById('lastUpdate').innerHTML = 'ошибка обновления';
+            console.error('Ошибка:', error);
         }
     }
     
     function renderPortfolio() {
         const container = document.getElementById('assetList');
-        let total = 0;
-        let totalChange = 0;
-        
+        let total = 0, totalChange = 0;
         if (portfolio.length === 0) {
             container.innerHTML = '<div class="loading">Нет активов. Добавьте первый</div>';
             document.getElementById('totalValue').innerHTML = '$0';
             document.getElementById('totalChange').innerHTML = '—';
             return;
         }
-        
         let itemsHtml = '';
         for (let i = 0; i < portfolio.length; i++) {
             const asset = portfolio[i];
@@ -592,10 +673,8 @@
             const value = price * asset.amount;
             const profit = value - (asset.entryPrice * asset.amount);
             const profitPercent = asset.entryPrice > 0 ? (profit / (asset.entryPrice * asset.amount)) * 100 : 0;
-            
             total += value;
             totalChange += profit;
-            
             itemsHtml += `
                 <div class="asset-item">
                     <div class="asset-info">
@@ -612,14 +691,10 @@
                 </div>
             `;
         }
-        
         container.innerHTML = itemsHtml;
-        
         const totalChangePercent = total > 0 ? (totalChange / (total - totalChange)) * 100 : 0;
         document.getElementById('totalValue').innerHTML = `$${total.toFixed(2)}`;
         document.getElementById('totalChange').innerHTML = `${totalChange >= 0 ? '▲' : '▼'} $${Math.abs(totalChange).toFixed(2)} (${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%)`;
-        document.getElementById('totalChange').className = `total-change ${totalChange >= 0 ? 'positive' : 'negative'}`;
-        
         if (portfolio.length > 0 && currentPrices[portfolio[0].id]) {
             document.getElementById('invCurrent').value = currentPrices[portfolio[0].id];
         }
@@ -629,32 +704,32 @@
         portfolio.splice(index, 1);
         savePortfolio();
         fetchPrices();
+        updateUIBasedOnPremium();
     }
     
     function addAsset() {
+        if (!isPremium() && portfolio.length >= 3) {
+            showToast('🔒 Бесплатная версия — максимум 3 актива. Купите Premium');
+            return;
+        }
         const select = document.getElementById('assetSelect');
         const amount = parseFloat(document.getElementById('assetAmount').value);
         const coinId = select.value;
         const coinName = select.options[select.selectedIndex].text.split('(')[0].trim();
         const symbol = select.options[select.selectedIndex].text.match(/\(([^)]+)\)/)[1];
-        
         if (isNaN(amount) || amount <= 0) {
             showToast('Введите корректное количество');
             return;
         }
-        
         portfolio.push({
-            id: coinId,
-            name: coinName,
-            symbol: symbol,
-            amount: amount,
-            entryPrice: currentPrices[coinId] || 0
+            id: coinId, name: coinName, symbol: symbol,
+            amount: amount, entryPrice: currentPrices[coinId] || 0
         });
-        
         savePortfolio();
         fetchPrices();
         showToast(`Добавлено ${amount} ${symbol}`);
         document.getElementById('assetAmount').value = '';
+        updateUIBasedOnPremium();
     }
     
     function calculateInvestment() {
@@ -662,29 +737,18 @@
         const entryPrice = parseFloat(document.getElementById('invEntry').value);
         let currentPrice = parseFloat(document.getElementById('invCurrent').value);
         const feePercent = parseFloat(document.getElementById('invFee').value) / 100;
-        
         if (isNaN(amount) || isNaN(entryPrice)) return;
-        
         if (isNaN(currentPrice) && portfolio.length > 0 && currentPrices[portfolio[0].id]) {
             currentPrice = currentPrices[portfolio[0].id];
             document.getElementById('invCurrent').value = currentPrice;
         }
-        
-        if (isNaN(currentPrice)) {
-            document.getElementById('calcCoins').innerHTML = '—';
-            document.getElementById('calcValue').innerHTML = '—';
-            document.getElementById('calcProfit').innerHTML = '—';
-            document.getElementById('calcRoi').innerHTML = '—';
-            return;
-        }
-        
+        if (isNaN(currentPrice)) return;
         const feeAmount = amount * feePercent;
         const actualInvestment = amount - feeAmount;
         const coins = actualInvestment / entryPrice;
         const currentValue = coins * currentPrice;
         const profit = currentValue - actualInvestment;
         const roi = (profit / actualInvestment) * 100;
-        
         document.getElementById('calcCoins').innerHTML = coins.toFixed(6);
         document.getElementById('calcValue').innerHTML = `$${currentValue.toFixed(2)}`;
         const profitEl = document.getElementById('calcProfit');
@@ -699,12 +763,9 @@
         const targetProfit = parseFloat(document.getElementById('targetProfit').value);
         const entryPrice = parseFloat(document.getElementById('targetEntry').value);
         const coins = parseFloat(document.getElementById('targetCoins').value);
-        
         if (isNaN(targetProfit) || isNaN(entryPrice) || isNaN(coins) || coins === 0) return;
-        
         const targetPrice = entryPrice + (targetProfit / coins);
         const growth = (targetPrice / entryPrice - 1) * 100;
-        
         document.getElementById('targetPrice').innerHTML = `$${targetPrice.toFixed(2)}`;
         document.getElementById('targetGrowth').innerHTML = `+${growth.toFixed(1)}%`;
     }
@@ -715,37 +776,23 @@
             container.innerHTML = '<div class="strategy-text">Добавьте активы в портфель для получения рекомендаций</div>';
             return;
         }
-        
-        let totalValue = 0;
-        let totalProfit = 0;
-        let bestAsset = null;
-        let worstAsset = null;
-        
+        let totalValue = 0, totalProfit = 0, bestAsset = null, worstAsset = null;
         for (const asset of portfolio) {
             const price = currentPrices[asset.id] || 0;
             const value = price * asset.amount;
             const profit = value - (asset.entryPrice * asset.amount);
             totalValue += value;
             totalProfit += profit;
-            
             const profitPercent = asset.entryPrice > 0 ? (profit / (asset.entryPrice * asset.amount)) * 100 : 0;
             if (!bestAsset || profitPercent > bestAsset.profit) bestAsset = { name: asset.name, profit: profitPercent };
             if (!worstAsset || profitPercent < worstAsset.profit) worstAsset = { name: asset.name, profit: profitPercent };
         }
-        
         const totalProfitPercent = totalValue > 0 ? (totalProfit / (totalValue - totalProfit)) * 100 : 0;
-        
         let strategy = '';
-        if (totalProfitPercent > 20) {
-            strategy = `📈 Портфель показывает отличный результат (+${totalProfitPercent.toFixed(1)}%). Рассмотрите фиксацию части прибыли по ${bestAsset?.name}.`;
-        } else if (totalProfitPercent > 5) {
-            strategy = `✅ Стабильный рост (+${totalProfitPercent.toFixed(1)}%). Рекомендуется удерживать позиции и следить за ${worstAsset?.name}.`;
-        } else if (totalProfitPercent > -5) {
-            strategy = `⚖️ Портфель в боковике. Хорошее время для усреднения по ${worstAsset?.name} если верите в проект.`;
-        } else {
-            strategy = `🔴 Просадка ${totalProfitPercent.toFixed(1)}%. Рекомендуется DCA (усреднение) по ${worstAsset?.name} или пересмотр позиций.`;
-        }
-        
+        if (totalProfitPercent > 20) strategy = `📈 Отличный результат (+${totalProfitPercent.toFixed(1)}%). Фиксация прибыли по ${bestAsset?.name}.`;
+        else if (totalProfitPercent > 5) strategy = `✅ Стабильный рост (+${totalProfitPercent.toFixed(1)}%). Следите за ${worstAsset?.name}.`;
+        else if (totalProfitPercent > -5) strategy = `⚖️ Портфель в боковике. Усредняйтесь по ${worstAsset?.name}.`;
+        else strategy = `🔴 Просадка ${totalProfitPercent.toFixed(1)}%. DCA по ${worstAsset?.name}.`;
         container.innerHTML = `<div class="strategy-text">${strategy}</div>`;
     }
     
@@ -757,10 +804,7 @@
         setTimeout(() => toast.remove(), 2000);
     }
     
-    function showPremiumToast() {
-        showToast('⭐ Премиум доступ (демо) — в реальной версии был бы платеж');
-    }
-    
+    checkPremium();
     loadPortfolio();
     fetchPrices();
     setInterval(fetchPrices, 30000);
